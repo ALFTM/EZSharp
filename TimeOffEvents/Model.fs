@@ -73,7 +73,13 @@ module Logic =
         events |> Seq.fold folder Map.empty
 
     let overlapWithAnyRequest (previousRequests: TimeOffRequest seq) request =
-        false //TODO
+        let boundaryExist boundary1 boundary2 = (boundary1.Date <= boundary2.Date) || (boundary1.HalfDay.Equals boundary2.HalfDay)
+        
+        previousRequests |> Seq.exists(fun previousRequest ->
+            let result = not (boundaryExist previousRequest.Start request.End 
+                        || boundaryExist request.Start previousRequest.End 
+                        || boundaryExist previousRequest.Start request.Start)
+            result = true)
 
     let createRequest previousRequests request =
         if overlapWithAnyRequest previousRequests request then

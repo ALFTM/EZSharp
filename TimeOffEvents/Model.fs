@@ -115,6 +115,28 @@ module Logic =
                         || boundaryExist previousRequest.Start request.Start)
             result = true)
 
+
+    let getRequests (store: IStore<UserId, RequestEvent>) userId = 
+        let stream = store.GetStream userId
+        let events = stream.ReadAll()
+        getAllRequests events
+
+    let realRequests (date: DateTime) activeRequests = 
+        let realRequests = 
+            activeRequests
+            |> Seq.filter (fun request -> request.Start.Date.Year = date.Year)
+            |> Seq.filter (fun request -> request.Start.Date < date)
+
+        Ok (Seq.toList realRequests)
+
+    let plannedRequests (date: DateTime) activeRequests = 
+        let plannedRequests =
+            activeRequests
+            |> Seq.filter (fun request -> request.Start.Date.Year = date.Year)
+            |> Seq.filter (fun request -> request.Start.Date > date)
+
+        Ok (Seq.toList plannedRequests)
+
     let createRequest previousRequests request =
         if overlapWithAnyRequest previousRequests request then
             Error "Overlapping request"
@@ -177,24 +199,25 @@ module Logic =
             Ok [RequestCancelledByManager requestState.Request]
         else
             Error "Request cannot be cancelled"
+    
+    let toStates requests =
+        requests
+        |> Map.toSeq
+        |> Seq.map (fun (_, state) -> state)
 
+    let filterActives (requests: Map<Guid, RequestState>) =
+        requests
+        |> toStates
+        |> Seq.where (fun state -> state.IsActive)
+        |> Seq.map (fun state -> state.Request)
 
     let handleCommand (store: IStore<UserId, RequestEvent>) (command: Command) =
-        let userId = command.UserId
-        let stream = store.GetStream userId
-        let events = stream.ReadAll()
-        let userRequests = getAllRequests events
+        let userRequests = getRequests store command.UserId
 
         match command with
         | RequestTimeOff request ->
-            let activeRequests =
-                userRequests
-                |> Map.toSeq
-                |> Seq.map (fun (_, state) -> state)
-                |> Seq.where (fun state -> state.IsActive)
-                |> Seq.map (fun state -> state.Request)
-
-            createRequest activeRequests request
+                let activeRequests = filterActives userRequests
+                createRequest activeRequests request
 
         | ValidateRequest (_, requestId) ->
             let requestState = defaultArg (userRequests.TryFind requestId) NotCreated
@@ -218,7 +241,7 @@ module Logic =
 
         | CancelByEmployeeRequest (_, requestId) ->
             let requestState = defaultArg (userRequests.TryFind requestId) NotCreated
-            cancelByEmployeeRequest requestState
+            cancelByEmployeeRequest requestState    
 
     let monthlyBalance (date: DateTime) (balance: float) = 
         (float date.Month - 1.) * balance
@@ -234,3 +257,23 @@ module Logic =
             | AM -> startHalfDay - 0.5
             | PM -> startHalfDay
         endHalfDay
+
+    let sumOfDurations (requests: seq<TimeOffRequest>) = 
+        Seq.sumBy askForDuration requests
+
+    let effectiveRequests date store userId = 
+        let requests = getRequests store userId
+        let activeRequests = filterActives requests
+        
+        realRequests date activeRequests
+
+    let plannedRequestsActiveRequests date store userId = 
+        let userRequests = getRequests store userId
+        let activeRequests = filterActives userRequests
+        plannedRequests date activeRequests
+
+    let plannedTimeRequests date store userId = 
+    let plannedRequestsActiveRequests date store userId = 
+        match plannedRequests date store userId with
+        | Ok requests -> sumOfDurations requests
+        | Error _ -> 0.

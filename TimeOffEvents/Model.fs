@@ -213,3 +213,18 @@ module Logic =
         | CancelByEmployeeRequest (_, requestId) ->
             let requestState = defaultArg (userRequests.TryFind requestId) NotCreated
             cancelByEmployeeRequest requestState
+
+    let monthlyBalance (date: DateTime) (balance: float) = 
+        (float date.Month - 1.) * balance
+
+    let askForDuration request = 
+        let fullDays = float (request.End.Date.Subtract request.Start.Date).Days + 1.
+        let startHalfDay = 
+            match request.Start.HalfDay with
+            | AM -> fullDays
+            | PM -> fullDays - 0.5
+        let endHalfDay = 
+            match request.End.HalfDay with
+            | AM -> startHalfDay - 0.5
+            | PM -> startHalfDay
+        endHalfDay

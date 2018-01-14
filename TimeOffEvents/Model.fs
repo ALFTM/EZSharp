@@ -35,6 +35,11 @@ type Command =
         match this with
         | RequestTimeOff request -> request.UserId
         | ValidateRequest (userId, _) -> userId
+        | RefuseRequest (userId, _) -> userId
+        | CancelByEmployeeRequest (userId, _) -> userId
+        | AskingForCancellationRequest (userId, _) -> userId 
+        | RefuseCancelationRequest (userId, _) -> userId 
+        | CancelByManagerRequest (userId, _) -> userId
 
 type RequestEvent =
     | RequestCreated of TimeOffRequest

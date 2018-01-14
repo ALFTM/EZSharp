@@ -273,7 +273,6 @@ module Logic =
         plannedRequests date activeRequests
 
     let plannedTimeRequests date store userId = 
-    let plannedRequestsActiveRequests date store userId = 
-        match plannedRequests date store userId with
-        | Ok requests -> sumOfDurations requests
-        | Error _ -> 0.
+            match plannedRequestsActiveRequests date store userId with
+            | Ok requests -> sumOfDurations requests
+            | Error _ -> 0.

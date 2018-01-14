@@ -25,7 +25,12 @@ type TimeOffRequest = {
 
 type Command =
     | RequestTimeOff of TimeOffRequest
-    | ValidateRequest of UserId * Guid with
+    | ValidateRequest of UserId * Guid 
+    | RefuseRequest of UserId * Guid
+    | CancelByEmployeeRequest of UserId * Guid
+    | AskingForCancellationRequest of UserId * Guid 
+    | RefuseCancelationRequest of UserId * Guid 
+    | CancelByManagerRequest of UserId * Guid with
     member this.UserId =
         match this with
         | RequestTimeOff request -> request.UserId
@@ -35,9 +40,9 @@ type RequestEvent =
     | RequestCreated of TimeOffRequest
     | RequestValidated of TimeOffRequest
     | RequestRefused of TimeOffRequest 
-    | RequestCancelledByEmployee of TimeOffRequest
-    | RequestCancelledByManager of TimeOffRequest 
-    | RequestAskingForCancellation of TimeOffRequest with
+    | RequestCancelledByEmployee of TimeOffRequest 
+    | RequestAskingForCancellation of TimeOffRequest
+    | RequestCancelledByManager of TimeOffRequest with
     member this.Request =
         match this with
         | RequestCreated request -> request
@@ -182,4 +187,24 @@ module Logic =
 
         | ValidateRequest (_, requestId) ->
             let requestState = defaultArg (userRequests.TryFind requestId) NotCreated
-            validateRequest requestState
+            validateRequest requestState 
+
+        | RefuseRequest (_, requestId) ->
+            let requestState = defaultArg (userRequests.TryFind requestId) NotCreated
+            refuseRequest requestState
+
+        | AskingForCancellationRequest (_, requestId) ->
+            let requestState = defaultArg (userRequests.TryFind requestId) NotCreated
+            askingForCancellationRequest requestState
+
+        | RefuseCancelationRequest (_, requestId) ->
+            let requestState = defaultArg (userRequests.TryFind requestId) NotCreated
+            refuseCancelationRequest requestState
+
+        | CancelByManagerRequest (_, requestId) ->
+            let requestState = defaultArg (userRequests.TryFind requestId) NotCreated
+            cancelByManagerRequest requestState
+
+        | CancelByEmployeeRequest (_, requestId) ->
+            let requestState = defaultArg (userRequests.TryFind requestId) NotCreated
+            cancelByEmployeeRequest requestState

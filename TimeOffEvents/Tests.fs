@@ -36,8 +36,8 @@ let validationTests =
       let request = {
         UserId = 1
         RequestId = Guid.Empty
-        Start = { Date = DateTime(2017, 12, 30); HalfDay = AM }
-        End = { Date = DateTime(2017, 12, 30); HalfDay = PM } }
+        Start = { Date = DateTime.Now.AddDays(-1.); HalfDay = AM }
+        End = { Date = DateTime.Now.AddDays(1.); HalfDay = PM } }
 
       Given [ RequestCreated request ]
       |> When (ValidateRequest (1, Guid.Empty))
@@ -45,8 +45,72 @@ let validationTests =
     }
   ]
 
+let refusalTests =
+  testList "Refusal tests" [
+    test "A request is refused" {
+      let request = {
+        UserId = 1
+        RequestId = Guid.Empty
+        Start = { Date = DateTime.Now.AddDays(-1.); HalfDay = AM }
+        End = { Date = DateTime.Now.AddDays(1.); HalfDay = PM } }
+
+      Given [ RequestCreated request ]
+      |> When (RefuseRequest (1, Guid.Empty, User.Manager))
+      |> Then (Ok [RequestRefused requestMock]) "The request has been refused"
+    }
+  ]
+
+let creationTests =
+  testList "Creation tests" [
+    test "A request is created" {
+      let request = {
+        UserId = 1
+        RequestId = Guid.Empty
+        Start = { Date = DateTime.Now.AddDays(-1.); HalfDay = AM }
+        End = { Date = DateTime.Now.AddDays(1.); HalfDay = PM } }
+
+      Given [ ]
+      |> When (RequestTimeOff (requestMock, User.Employee))
+      |> Then (Ok [RequestCreated request]) "The request has been created"
+    }
+  ]
+
+let cancelTests =
+  testList "Cancellation tests" [
+    test "A pending request is cancelled by manager" {
+      let request = {
+        UserId = 1
+        RequestId = Guid.Empty
+        Start = { Date = DateTime.Now.AddDays(-1.); HalfDay = AM }
+        End = { Date = DateTime.Now.AddDays(1.); HalfDay = PM } }
+
+      Given [ RequestCreated request ]
+      |> When (ManagerCancelRequest (1, Guid.Empty, User.Manager))
+      |> Then (Ok [RequestManagerCancelled request]) "The pending request has been cancelled"
+    }
+  ]
+
+let askCancelTests =
+  testList "Ask cancel tests" [
+    test "Validated requests with start in past can be asked cancel" {
+      let request = {
+        UserId = 1
+        RequestId = Guid.Empty
+        Start = { Date = DateTime.Now.AddDays(-1.); HalfDay = AM }
+        End = { Date = DateTime.Now.AddDays(1.); HalfDay = PM } }
+
+      Given [ RequestValidated request ]
+      |> When (AskCancelRequest (1, Guid.Empty, User.Employee))
+      |> Then (Ok [RequestAskCancelled request]) "The validated has been asked cancelation"
+    }
+  ]
+
 let tests =
   testList "All tests" [
     creationTests
     validationTests
+    refusalTests
+    creationTests
+    cancelTests
+    askCancelTests
   ]

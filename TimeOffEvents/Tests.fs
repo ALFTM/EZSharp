@@ -15,21 +15,6 @@ let Then expected message (events: RequestEvent list, command) =
 
 open System
 
-let creationTests =
-  testList "Creation tests" [
-    test "A request is created" {
-      let request = {
-        UserId = 1
-        RequestId = Guid.Empty
-        Start = { Date = DateTime.Now.AddDays(-1.); HalfDay = AM }
-        End = { Date = DateTime.Now.AddDays(1.); HalfDay = PM } }
-
-      Given [ ]
-      |> When (RequestTimeOff request)
-      |> Then (Ok [RequestCreated request]) "The request has been created"
-    }
-  ]
-
 let validationTests =
   testList "Validation tests" [
     test "A request is validated" {
@@ -55,8 +40,8 @@ let refusalTests =
         End = { Date = DateTime.Now.AddDays(1.); HalfDay = PM } }
 
       Given [ RequestCreated request ]
-      |> When (RefuseRequest (1, Guid.Empty, User.Manager))
-      |> Then (Ok [RequestRefused requestMock]) "The request has been refused"
+      |> When (RefuseRequest (1, Guid.Empty))
+      |> Then (Ok [RequestRefused request]) "The request has been refused"
     }
   ]
 
@@ -70,7 +55,7 @@ let creationTests =
         End = { Date = DateTime.Now.AddDays(1.); HalfDay = PM } }
 
       Given [ ]
-      |> When (RequestTimeOff (requestMock, User.Employee))
+      |> When (RequestTimeOff (request))
       |> Then (Ok [RequestCreated request]) "The request has been created"
     }
   ]
@@ -85,8 +70,8 @@ let cancelTests =
         End = { Date = DateTime.Now.AddDays(1.); HalfDay = PM } }
 
       Given [ RequestCreated request ]
-      |> When (ManagerCancelRequest (1, Guid.Empty, User.Manager))
-      |> Then (Ok [RequestManagerCancelled request]) "The pending request has been cancelled"
+      |> When (CancelByManagerRequest (1, Guid.Empty))
+      |> Then (Ok [RequestCancelledByManager request]) "The pending request has been cancelled"
     }
   ]
 
@@ -100,8 +85,8 @@ let askCancelTests =
         End = { Date = DateTime.Now.AddDays(1.); HalfDay = PM } }
 
       Given [ RequestValidated request ]
-      |> When (AskCancelRequest (1, Guid.Empty, User.Employee))
-      |> Then (Ok [RequestAskCancelled request]) "The validated has been asked cancelation"
+      |> When (AskingForCancellationRequest (1, Guid.Empty))
+      |> Then (Ok [RequestAskingForCancellation request]) "The validated has been asked cancelation"
     }
   ]
 

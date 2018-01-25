@@ -92,7 +92,6 @@ let askCancelTests =
 
 let tests =
   testList "All tests" [
-    creationTests
     validationTests
     refusalTests
     creationTests

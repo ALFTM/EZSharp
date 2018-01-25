@@ -51,8 +51,8 @@ let creationTests =
       let request = {
         UserId = 1
         RequestId = Guid.Empty
-        Start = { Date = DateTime.Now.AddDays(-1.); HalfDay = AM }
-        End = { Date = DateTime.Now.AddDays(1.); HalfDay = PM } }
+        Start = { Date = DateTime.Now.AddDays(1.); HalfDay = AM }
+        End = { Date = DateTime.Now.AddDays(3.); HalfDay = PM } }
 
       Given [ ]
       |> When (RequestTimeOff (request))
